@@ -19,7 +19,7 @@
 #include <service/crypto/protobuf/generate_random.pb.h>
 #include <pb_decode.h>
 #include <pb_encode.h>
-#include <psa/crypto.h>
+#include <service/crypto/backend/crypto_backend.h>
 #include "pb_key_attributes_translator.h"
 #include "pb_crypto_provider_serializer.h"
 

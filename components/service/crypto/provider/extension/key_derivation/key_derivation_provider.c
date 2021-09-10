@@ -8,7 +8,8 @@
 #include <protocols/service/crypto/packed-c/opcodes.h>
 #include <service/crypto/provider/extension/key_derivation/key_derivation_provider.h>
 #include <protocols/rpc/common/packed-c/status.h>
-#include <psa/crypto.h>
+#include <service/crypto/backend/crypto_backend.h>
+#include <service/crypto/provider/crypto_partition.h>
 
 /* Service request handlers */
 static rpc_status_t key_derivation_setup_handler(void *context, struct call_req* req);
@@ -265,8 +266,11 @@ static rpc_status_t key_derivation_input_key_handler(void *context, struct call_
 
 			if (crypto_context) {
 
+				namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+					call_req_get_caller_id(req), key_id);
+
 				psa_status = psa_key_derivation_input_key(&crypto_context->op.key_derivation,
-					step, key_id);
+					step, nsid);
 			}
 		}
 
@@ -354,14 +358,17 @@ static rpc_status_t key_derivation_output_key_handler(void *context, struct call
 
 		if (crypto_context) {
 
-			psa_key_id_t key_id;
+			namespaced_key_id_t nsid;
+
+			crypto_partition_associate(&attributes, call_req_get_caller_id(req));
 
 			psa_status = psa_key_derivation_output_key(&attributes,
 				&crypto_context->op.key_derivation,
-				&key_id);
+				&nsid);
 
 			if (psa_status == PSA_SUCCESS) {
 
+				psa_key_id_t key_id = namespaced_key_id_get_key_id(nsid);
 				struct call_param_buf *resp_buf = call_req_get_resp_buf(req);
 				rpc_status = serializer->serialize_key_derivation_output_key_resp(resp_buf,
 					key_id);
@@ -440,8 +447,11 @@ static rpc_status_t key_derivation_key_agreement_handler(void *context, struct c
 
 		if (crypto_context) {
 
+			namespaced_key_id_t private_nsid = crypto_partition_get_namespaced_key_id(
+				call_req_get_caller_id(req), private_key_id);
+
 			psa_status = psa_key_derivation_key_agreement(&crypto_context->op.key_derivation,
-				step, private_key_id, peer_key, peer_key_len);
+				step, private_nsid, peer_key, peer_key_len);
 		}
 
 		call_req_set_opstatus(req, psa_status);
@@ -471,8 +481,11 @@ static rpc_status_t key_derivation_raw_key_agreement_handler(void *context, stru
 		size_t output_len;
 		uint8_t output[PSA_RAW_KEY_AGREEMENT_OUTPUT_MAX_SIZE];
 
+		namespaced_key_id_t private_nsid = crypto_partition_get_namespaced_key_id(
+				call_req_get_caller_id(req), private_key_id);
+
 		psa_status_t psa_status = psa_raw_key_agreement(
-			alg, private_key_id, peer_key, peer_key_len,
+			alg, private_nsid, peer_key, peer_key_len,
 			output, sizeof(output), &output_len);
 
 		if (psa_status == PSA_SUCCESS) {

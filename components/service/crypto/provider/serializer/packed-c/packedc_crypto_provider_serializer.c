@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <common/tlv/tlv.h>
-#include <psa/crypto.h>
+#include <service/crypto/backend/crypto_backend.h>
 #include <protocols/rpc/common/packed-c/status.h>
 #include <protocols/service/crypto/packed-c/key_attributes.h>
 #include <protocols/service/crypto/packed-c/asymmetric_decrypt.h>

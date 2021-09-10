@@ -24,3 +24,9 @@ set(MBEDTLS_EXTRA_INCLUDES
 	"${TS_ROOT}/components/service/common/include"
 	"${TS_ROOT}/components/service/secure_storage/include"
 	CACHE STRING "PSA ITS for Mbed TLS" FORCE)
+
+# Ensure that mbedtls user config file define is also included in the parent build
+# context as it potentially effects mbedtls public header files.
+target_compile_definitions(${TGT} PUBLIC
+	MBEDTLS_USER_CONFIG_FILE="${MBEDTLS_USER_CONFIG_FILE}"
+	)

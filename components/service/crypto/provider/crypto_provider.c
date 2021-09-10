@@ -8,7 +8,8 @@
 #include <protocols/service/crypto/packed-c/opcodes.h>
 #include <service/crypto/provider/crypto_provider.h>
 #include <protocols/rpc/common/packed-c/status.h>
-#include <psa/crypto.h>
+#include <service/crypto/backend/crypto_backend.h>
+#include "crypto_partition.h"
 
 /* Service request handlers */
 static rpc_status_t generate_key_handler(void *context, struct call_req* req);
@@ -107,12 +108,15 @@ static rpc_status_t generate_key_handler(void *context, struct call_req* req)
 	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
 		psa_status_t psa_status;
-		psa_key_id_t id;
+		namespaced_key_id_t nsid;
 
-		psa_status = psa_generate_key(&attributes, &id);
+		crypto_partition_associate(&attributes, call_req_get_caller_id(req));
+
+		psa_status = psa_generate_key(&attributes, &nsid);
 
 		if (psa_status == PSA_SUCCESS) {
 
+			psa_key_id_t id = namespaced_key_id_get_key_id(nsid);
 			struct call_param_buf *resp_buf = call_req_get_resp_buf(req);
 			rpc_status = serializer->serialize_generate_key_resp(resp_buf, id);
 		}
@@ -139,8 +143,10 @@ static rpc_status_t destroy_key_handler(void *context, struct call_req* req)
 	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
 		psa_status_t psa_status;
+		namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+			call_req_get_caller_id(req), id);
 
-		psa_status = psa_destroy_key(id);
+		psa_status = psa_destroy_key(nsid);
 		call_req_set_opstatus(req, psa_status);
 	}
 
@@ -160,13 +166,16 @@ static rpc_status_t export_key_handler(void *context, struct call_req* req)
 
 	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
+		namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+			call_req_get_caller_id(req), id);
+
 		size_t max_export_size = PSA_EXPORT_KEY_PAIR_MAX_SIZE;
 		uint8_t *key_buffer = malloc(max_export_size);
 
 		if (key_buffer) {
 
 			size_t export_size;
-			psa_status_t psa_status = psa_export_key(id, key_buffer,
+			psa_status_t psa_status = psa_export_key(nsid, key_buffer,
 				max_export_size, &export_size);
 
 			if (psa_status == PSA_SUCCESS) {
@@ -201,13 +210,16 @@ static rpc_status_t export_public_key_handler(void *context, struct call_req* re
 
 	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
+		namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+			call_req_get_caller_id(req), id);
+
 		size_t max_export_size = PSA_EXPORT_PUBLIC_KEY_MAX_SIZE;
 		uint8_t *key_buffer = malloc(max_export_size);
 
 		if (key_buffer) {
 
 			size_t export_size;
-			psa_status_t psa_status = psa_export_public_key(id, key_buffer,
+			psa_status_t psa_status = psa_export_public_key(nsid, key_buffer,
 				max_export_size, &export_size);
 
 			if (psa_status == PSA_SUCCESS) {
@@ -249,12 +261,15 @@ static rpc_status_t import_key_handler(void *context, struct call_req* req)
 			if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
 				psa_status_t psa_status;
-				psa_key_id_t id;
+				namespaced_key_id_t nsid;
 
-				psa_status = psa_import_key(&attributes, key_buffer, key_data_len, &id);
+				crypto_partition_associate(&attributes, call_req_get_caller_id(req));
+
+				psa_status = psa_import_key(&attributes, key_buffer, key_data_len, &nsid);
 
 				if (psa_status == PSA_SUCCESS) {
 
+					psa_key_id_t id = namespaced_key_id_get_key_id(nsid);
 					struct call_param_buf *resp_buf = call_req_get_resp_buf(req);
 					rpc_status = serializer->serialize_import_key_resp(resp_buf, id);
 				}
@@ -290,14 +305,17 @@ static rpc_status_t asymmetric_sign_handler(void *context, struct call_req* req)
 
 	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
+		namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+			call_req_get_caller_id(req), id);
+
 		psa_status_t psa_status;
 		size_t sig_len;
 		uint8_t sig_buffer[PSA_SIGNATURE_MAX_SIZE];
 
 		psa_status = (call_req_get_opcode(req) == TS_CRYPTO_OPCODE_SIGN_HASH) ?
-			psa_sign_hash(id, alg, hash_buffer, hash_len,
+			psa_sign_hash(nsid, alg, hash_buffer, hash_len,
 				sig_buffer, sizeof(sig_buffer), &sig_len) :
-			psa_sign_message(id, alg, hash_buffer, hash_len,
+			psa_sign_message(nsid, alg, hash_buffer, hash_len,
 				sig_buffer, sizeof(sig_buffer), &sig_len);
 
 		if (psa_status == PSA_SUCCESS) {
@@ -333,12 +351,14 @@ static rpc_status_t asymmetric_verify_handler(void *context, struct call_req* re
 	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
 		psa_status_t psa_status;
+		namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+			call_req_get_caller_id(req), id);
 
 		psa_status = (call_req_get_opcode(req) == TS_CRYPTO_OPCODE_VERIFY_HASH) ?
-			psa_verify_hash(id, alg,
+			psa_verify_hash(nsid, alg,
 				hash_buffer, hash_len,
 				sig_buffer, sig_len) :
-			psa_verify_message(id, alg,
+			psa_verify_message(nsid, alg,
 				hash_buffer, hash_len,
 				sig_buffer, sig_len);
 
@@ -376,8 +396,10 @@ static rpc_status_t asymmetric_decrypt_handler(void *context, struct call_req* r
 
 				psa_status_t psa_status;
 				psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
+				namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+					call_req_get_caller_id(req), id);
 
-				psa_status = psa_get_key_attributes(id, &attributes);
+				psa_status = psa_get_key_attributes(nsid, &attributes);
 
 				if (psa_status == PSA_SUCCESS) {
 
@@ -394,7 +416,7 @@ static rpc_status_t asymmetric_decrypt_handler(void *context, struct call_req* r
 						/* Salt is an optional parameter */
 						uint8_t *salt = (salt_len) ? salt_buffer : NULL;
 
-						psa_status = psa_asymmetric_decrypt(id, alg,
+						psa_status = psa_asymmetric_decrypt(nsid, alg,
 									ciphertext_buffer, ciphertext_len,
 									salt, salt_len,
 									plaintext_buffer, max_decrypt_size, &plaintext_len);
@@ -458,8 +480,10 @@ static rpc_status_t asymmetric_encrypt_handler(void *context, struct call_req* r
 
 				psa_status_t psa_status;
 				psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
+				namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+					call_req_get_caller_id(req), id);
 
-				psa_status = psa_get_key_attributes(id, &attributes);
+				psa_status = psa_get_key_attributes(nsid, &attributes);
 
 				if (psa_status == PSA_SUCCESS) {
 
@@ -476,7 +500,7 @@ static rpc_status_t asymmetric_encrypt_handler(void *context, struct call_req* r
 						/* Salt is an optional parameter */
 						uint8_t *salt = (salt_len) ? salt_buffer : NULL;
 
-						psa_status = psa_asymmetric_encrypt(id, alg,
+						psa_status = psa_asymmetric_encrypt(nsid, alg,
 									plaintext_buffer, plaintext_len,
 									salt, salt_len,
 									ciphertext_buffer, max_encrypt_size, &ciphertext_len);
@@ -565,12 +589,17 @@ static rpc_status_t copy_key_handler(void *context, struct call_req* req)
 
 	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
-		psa_key_id_t target_key_id;
+		namespaced_key_id_t target_nsid;
+		namespaced_key_id_t source_nsid = crypto_partition_get_namespaced_key_id(
+			call_req_get_caller_id(req), source_key_id);
 
-		psa_status_t psa_status = psa_copy_key(source_key_id, &attributes, &target_key_id);
+		crypto_partition_associate(&attributes, call_req_get_caller_id(req));
+
+		psa_status_t psa_status = psa_copy_key(source_nsid, &attributes, &target_nsid);
 
 		if (psa_status == PSA_SUCCESS) {
 
+			psa_key_id_t target_key_id = namespaced_key_id_get_key_id(target_nsid);
 			struct call_param_buf *resp_buf = call_req_get_resp_buf(req);
 			rpc_status = serializer->serialize_copy_key_resp(resp_buf, target_key_id);
 		}
@@ -596,7 +625,10 @@ static rpc_status_t purge_key_handler(void *context, struct call_req* req)
 
 	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
-		psa_status_t psa_status = psa_purge_key(id);
+		namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+			call_req_get_caller_id(req), id);
+
+		psa_status_t psa_status = psa_purge_key(nsid);
 		call_req_set_opstatus(req, psa_status);
 	}
 
@@ -617,8 +649,10 @@ static rpc_status_t get_key_attributes_handler(void *context, struct call_req* r
 	if (rpc_status == TS_RPC_CALL_ACCEPTED) {
 
 		psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
+		namespaced_key_id_t nsid = crypto_partition_get_namespaced_key_id(
+			call_req_get_caller_id(req), id);
 
-		psa_status_t psa_status = psa_get_key_attributes(id, &attributes);
+		psa_status_t psa_status = psa_get_key_attributes(nsid, &attributes);
 
 		if (psa_status == PSA_SUCCESS) {
 

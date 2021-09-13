@@ -7,82 +7,18 @@
 #ifndef CRYPTO_BACKEND_H
 #define CRYPTO_BACKEND_H
 
-#include <stdint.h>
-
 /**
- * Provides the common crypto backend initerface, based on the psa crypto
- * API.  To accommodate backend specific overrides to API types, a
- * backend may provide its own API definitions.
+ * The crypto backend implements the backend interface used by a crypto
+ * provider.  By default, the backend interface is the standard psa
+ * crypto api with additional functions to provide a common interface
+ * for partitioning the keystore into separate namespaces.  Alternative
+ * backends can provide their own version of the interface with overridden
+ * types and keystore namespacing functions.
  */
-#include <psa/crypto.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Crypto frontends that support some kind of key id namespacing, should
- * use this type for key ids.  Namespacing allows for partitioning of
- * the key id namespace.  The nature of the partitioning is up to a
- * crypto frontend.  Note that a backend may override this typedef to
- * suite the backend's handling of namespaces.
- */
-typedef psa_key_id_t namespaced_key_id_t;
-
-/**
- * An overridable type for a key id namespace.
- */
-typedef int32_t key_id_namespace_t;
-
-/**
- * \brief Initialize a namespaced key id
- *
- * This default implementation just discards the namespace.
- *
- * \param ns_key_id  	The object to initialize
- * \param ns          	The namespace
- * \param key_id		The key id
- */
-static inline void namespaced_key_id_init(
-	namespaced_key_id_t *ns_key_id,
-	key_id_namespace_t ns,
-	psa_key_id_t key_id)
-{
-	(void)ns;
-	*ns_key_id = key_id;
-}
-
-/**
- * \brief Get the key id from a namespaced_key_id_t
- *
- * \param ns_key_id  The object to initialize
- * \return Key id without namespace
- */
-static inline psa_key_id_t namespaced_key_id_get_key_id(
-	namespaced_key_id_t ns_key_id)
-{
-	return ns_key_id;
-}
-
-/**
- * \brief Set the key id namespace associated with a key attributes object
- *
- * The default implementation discards the namespace
- *
- * \param attributes 	Key attributes object
- * \param ns  			Key is namespace
- */
-static inline void namespaced_key_id_set_namespace(
-	psa_key_attributes_t *attributes,
-	key_id_namespace_t ns)
-{
-	(void)attributes;
-	(void)ns;
-}
-
-
-#ifdef __cplusplus
-} /* extern "C" */
+#ifdef ALTERNATIVE_CRYPTO_BACKEND
+#include ALTERNATIVE_CRYPTO_BACKEND
+#else
+#include "default_crypto_backend.h"
 #endif
 
 #endif /* CRYPTO_BACKEND_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+ * Copyright (c) 2020-2022, Arm Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -64,7 +64,10 @@ void standalone_service_context::deinit()
 
 rpc_session_handle standalone_service_context::open(struct rpc_caller **caller)
 {
-	struct rpc_session *session = new rpc_session(m_rpc_interface, m_rpc_buffer_size_override);
+	struct rpc_session *session = new rpc_session(
+		m_rpc_interface,
+		m_rpc_buffer_size_override);
+
 	*caller = session->m_rpc_caller;
 	return static_cast<rpc_session_handle>(session);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+ * Copyright (c) 2020-2022, Arm Limited and Contributors. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -11,11 +11,13 @@
 
 #define DIRECT_CALLER_DEFAULT_REQ_BUF_SIZE      (4096)
 #define DIRECT_CALLER_DEFAULT_RESP_BUF_SIZE     (4096)
+#define DIRECT_CALLER_BASE_DEFAULT_ID           (0x10000)
 
 static rpc_call_handle call_begin(void *context, uint8_t **req_buf, size_t req_len);
 static rpc_status_t call_invoke(void *context, rpc_call_handle handle, uint32_t opcode,
 		     	rpc_opstatus_t *opstatus, uint8_t **resp_buf, size_t *resp_len);
 static void call_end(void *context, rpc_call_handle handle);
+static uint32_t assign_default_caller_id(void);
 
 
 struct rpc_caller *direct_caller_init(struct direct_caller *s, struct rpc_interface *iface,
@@ -29,7 +31,7 @@ struct rpc_caller *direct_caller_init(struct direct_caller *s, struct rpc_interf
     base->call_end = call_end;
 
     s->rpc_interface = iface;
-    s->caller_id = 0;
+    s->caller_id = assign_default_caller_id();
     s->is_call_transaction_in_progess = false;
     s->req_len = 0;
     s->req_buf_size = req_buf_size;
@@ -123,4 +125,16 @@ static void call_end(void *context, rpc_call_handle handle)
         this_context->req_len = 0;
         this_context->is_call_transaction_in_progess = false;
     }
+}
+
+static uint32_t assign_default_caller_id(void)
+{
+    /* By default, each caller is assigned a unique ID to represent
+     * callers operating from different security domains. This may be
+     * overridden after initialization if necessary.
+     */
+    static uint32_t next_caller_id = DIRECT_CALLER_BASE_DEFAULT_ID;
+    uint32_t assigned_id = next_caller_id++;
+
+    return assigned_id;
 }

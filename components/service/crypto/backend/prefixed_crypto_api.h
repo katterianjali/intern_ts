@@ -31,6 +31,7 @@
 #define psa_sign_message					BACKEND_CRYPTO_API_ADD_PREFIX(psa_sign_message)
 #define psa_verify_hash						BACKEND_CRYPTO_API_ADD_PREFIX(psa_verify_hash)
 #define psa_verify_message					BACKEND_CRYPTO_API_ADD_PREFIX(psa_verify_message)
+#define psa_reset_key_attributes			BACKEND_CRYPTO_API_ADD_PREFIX(psa_reset_key_attributes)
 
 /* Cipher operations */
 #define psa_cipher_encrypt_setup			BACKEND_CRYPTO_API_ADD_PREFIX(psa_cipher_encrypt_setup)
@@ -78,6 +79,8 @@
 #define psa_mac_compute						BACKEND_CRYPTO_API_ADD_PREFIX(psa_mac_compute)
 
 /* AEAD operations */
+#define psa_aead_encrypt          	        BACKEND_CRYPTO_API_ADD_PREFIX(psa_aead_encrypt)
+#define psa_aead_decrypt          	        BACKEND_CRYPTO_API_ADD_PREFIX(psa_aead_decrypt)
 #define psa_aead_encrypt_setup          	BACKEND_CRYPTO_API_ADD_PREFIX(psa_aead_encrypt_setup)
 #define psa_aead_decrypt_setup          	BACKEND_CRYPTO_API_ADD_PREFIX(psa_aead_decrypt_setup)
 #define psa_aead_generate_nonce         	BACKEND_CRYPTO_API_ADD_PREFIX(psa_aead_generate_nonce)

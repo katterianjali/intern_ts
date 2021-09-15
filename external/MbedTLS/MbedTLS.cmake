@@ -96,9 +96,6 @@ if (NOT MBEDCRYPTO_LIB_FILE)
 	#Configure Mbed TLS to build only mbedcrypto lib
 	execute_process(COMMAND ${Python3_EXECUTABLE} scripts/config.py crypto WORKING_DIRECTORY ${MBEDTLS_SOURCE_DIR})
 
-	# Advertise Mbed TLS as the provider of the psa crypto API
-	set(PSA_CRYPTO_API_INCLUDE "${MBEDTLS_INSTALL_DIR}/include" CACHE STRING "PSA Crypto API include path")
-
 	include(${TS_ROOT}/tools/cmake/common/PropertyCopy.cmake)
 
 	# Only pass libc settings to MbedTLS if needed. For environments where the standard
@@ -156,6 +153,13 @@ if (NOT MBEDCRYPTO_LIB_FILE)
 
 	set(MBEDCRYPTO_LIB_FILE "${MBEDTLS_INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}mbedcrypto${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
+
+# Advertise Mbed TLS provided psa crypto api header file.  Can be used with #include MBEDTLS_PSA_CRYPTO_H
+# when it is necessary to explicitly include the mbedtls provided version of psa/crypto.h.
+add_compile_definitions(MBEDTLS_PSA_CRYPTO_H="${MBEDTLS_INSTALL_DIR}/include/psa/crypto.h")
+
+# Advertise the public interface path to allow a deployment to determine what scope to give it
+set(MBEDTLS_PUBLIC_INCLUDE_PATH "${MBEDTLS_INSTALL_DIR}/include" CACHE STRING "Mbedtls public include path")
 
 #Create an imported target to have clean abstraction in the build-system.
 add_library(mbedcrypto STATIC IMPORTED)

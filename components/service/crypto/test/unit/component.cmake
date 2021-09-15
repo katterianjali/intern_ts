@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -10,7 +10,4 @@ endif()
 
 target_sources(${TGT} PRIVATE
 	"${CMAKE_CURRENT_LIST_DIR}/crypto_msg_encode_decode.cpp"
-	"${CMAKE_CURRENT_LIST_DIR}/poc_crypto_ops.cpp"
-	"${CMAKE_CURRENT_LIST_DIR}/crypto_fault_tests.cpp"
 	)
-

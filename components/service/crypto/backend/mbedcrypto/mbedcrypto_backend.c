@@ -5,8 +5,8 @@
  */
 
 #include <service/crypto/backend/mbedcrypto/trng_adapter/trng_adapter.h>
+#include <service/crypto/backend/mbedcrypto/crypto_backend.h>
 #include <service/secure_storage/frontend/psa/its/its_frontend.h>
-#include <psa/crypto.h>
 
 
 psa_status_t mbedcrypto_backend_init(struct storage_backend *storage_backend,

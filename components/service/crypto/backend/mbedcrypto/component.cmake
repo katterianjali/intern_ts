@@ -30,3 +30,9 @@ set(MBEDTLS_EXTRA_INCLUDES
 target_compile_definitions(${TGT} PUBLIC
 	MBEDTLS_USER_CONFIG_FILE="${MBEDTLS_USER_CONFIG_FILE}"
 	)
+
+# Override the default crypto backend interface with an alternative that is
+# compatible with the configuration of mbedtls that this component imposes.
+target_compile_definitions(${TGT} PUBLIC
+	ALTERNATIVE_CRYPTO_BACKEND="${CMAKE_CURRENT_LIST_DIR}/crypto_backend.h"
+	)

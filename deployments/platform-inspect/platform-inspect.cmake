@@ -52,9 +52,12 @@ set(MBEDTLS_USER_CONFIG_FILE
 include(../../../external/MbedTLS/MbedTLS.cmake)
 target_link_libraries(platform-inspect PRIVATE mbedcrypto)
 
+# Use Mbed TLS to provide the psa crypto api interface files
+set(PSA_CRYPTO_API_INCLUDE "${MBEDTLS_PUBLIC_INCLUDE_PATH}")
+
 # Qcbor
 include(${TS_ROOT}/external/qcbor/qcbor.cmake)
-target_link_libraries(platform-inspect PRIVATE qcbor)
+target_link_libraries(platform-inspect PRIVATE "-Wl,--whole-archive" qcbor "-Wl,--no-whole-archive")
 
 # t_cose
 include(${TS_ROOT}/external/t_cose/t_cose.cmake)

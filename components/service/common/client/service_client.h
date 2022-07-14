@@ -16,6 +16,13 @@
 extern "C" {
 #endif
 
+#ifdef EXPORT_PUBLIC_INTERFACE_SERVICE_CLIENT
+#define SERVICE_CLIENT_EXPORTED __attribute__((__visibility__("default")))
+#else
+#define SERVICE_CLIENT_EXPORTED
+#endif
+
+
 /**
  * @brief      Common service client structure
  *
@@ -43,7 +50,7 @@ struct service_client
  *
  * @return     A status indicating the success/failure of the operation
  */
-psa_status_t service_client_init(
+SERVICE_CLIENT_EXPORTED psa_status_t service_client_init(
 	struct service_client *context,
 	struct rpc_caller *caller);
 

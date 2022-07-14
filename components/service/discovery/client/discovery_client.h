@@ -14,6 +14,14 @@
 extern "C" {
 #endif
 
+#ifdef EXPORT_PUBLIC_INTERFACE_DISCOVERY_CLIENT
+#define DISCOVERY_CLIENT_EXPORTED __attribute__((__visibility__("default")))
+#else
+#define DISCOVERY_CLIENT_EXPORTED
+#endif
+
+
+
 /**
  * @brief Get service info
  *
@@ -26,7 +34,7 @@ extern "C" {
  *
  * @return     Success if information discovered
  */
-psa_status_t discovery_client_get_service_info(
+DISCOVERY_CLIENT_EXPORTED psa_status_t discovery_client_get_service_info(
 	struct service_client *service_client);
 
 

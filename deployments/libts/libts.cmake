@@ -34,6 +34,8 @@ add_components(
 		"components/rpc/common/interface"
 		"components/service/locator"
 		"components/service/locator/interface"
+		"components/service/discovery/client"
+		"components/service/crypto/client/caller/packed-c"
 )
 
 #-------------------------------------------------------------------------------
@@ -45,6 +47,9 @@ add_components(
 target_compile_definitions(ts PRIVATE
 	EXPORT_PUBLIC_INTERFACE_RPC_CALLER
 	EXPORT_PUBLIC_INTERFACE_SERVICE_LOCATOR
+	EXPORT_PUBLIC_INTERFACE_SERVICE_CLIENT
+	EXPORT_PUBLIC_INTERFACE_DISCOVERY_CLIENT
+	EXPORT_PUBLIC_INTERFACE_CALLER_CLIENT
 )
 
 #-------------------------------------------------------------------------------
